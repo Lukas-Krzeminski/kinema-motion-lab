@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KINEMA Motion Intelligence Suite</title>
+<link rel="stylesheet" href="styles/main.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23071a17'/><circle cx='16' cy='16' r='7' fill='none' stroke='%235ef2d6' stroke-width='2.5'/><circle cx='16' cy='16' r='2.5' fill='%235ef2d6'/></svg>">
+</head>
+<body>
+
+<header class="topbar" data-topbar>
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true"></span>
+    <span class="brand-name" data-app-name>KINEMA</span>
+    <span class="brand-sub" data-app-subtitle>Motion Intelligence Suite</span>
+  </div>
+  <div class="topbar-meta">
+    <span class="meta-item"><b>SESSION</b> <span data-session-id>--</span></span>
+    <span class="meta-item"><b>BUILD</b> <span data-app-build>--</span></span>
+    <span class="meta-item version" data-app-version>v--</span>
+  </div>
+</header>
+
+<main class="stage">
+
+  <!-- ================= BOOT ================= -->
+  <section class="screen screen-boot" data-screen="boot">
+    <div class="panel panel-boot">
+      <div class="panel-head">
+        <h1>System initialisation</h1>
+        <span class="pill pill-live">RUNNING</span>
+      </div>
+      <ol class="log" data-boot-log></ol>
+    </div>
+  </section>
+
+  <!-- ================= CONSENT ================= -->
+  <section class="screen screen-consent" data-screen="consent">
+    <div class="panel panel-consent">
+      <div class="consent-icon" aria-hidden="true">
+        <svg viewBox="0 0 48 48" fill="none">
+          <rect x="4" y="12" width="30" height="24" rx="4" stroke="currentColor" stroke-width="2.5"/>
+          <path d="M34 21l10-6v18l-10-6z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h1 data-consent-title>Camera access required</h1>
+      <p class="consent-body" data-consent-body></p>
+      <p class="consent-note" data-consent-note></p>
+      <p class="consent-error" data-consent-error hidden></p>
+      <button class="btn btn-primary" data-consent-action>Enable camera</button>
+      <ul class="consent-facts">
+        <li><b>Processing</b> On-device WebAssembly</li>
+        <li><b>Network</b> Model files only</li>
+        <li><b>Retention</b> In-memory, cleared on exit</li>
+      </ul>
+    </div>
+  </section>
+
+
+  <!-- ================= CAPTURE ================= -->
+  <section class="screen screen-capture" data-screen="capture">
+    <div class="viewport" data-hud>
+      <video data-cam playsinline muted></video>
+      <canvas data-overlay></canvas>
+
+      <!-- Small dim strip; LAYOUT.SHOW_TELEMETRY hides it entirely. -->
+      <div class="telemetry" data-telemetry>
+        <span><b data-field="tracking">SEARCHING</b></span>
+        <span><i>fps</i> <b data-field="fps">0</b></span>
+        <span><i>inf</i> <b data-field="latency">0ms</b></span>
+        <span><i>lm</i> <b data-field="landmarks">0</b></span>
+        <span><i>in</i> <b data-field="resolution">--</b></span>
+        <span><b data-field="mode">CONTINUOUS</b></span>
+        <span><b data-field="rec">idle</b></span>
+      </div>
+
+      <!-- LEFT: hand signal -->
+      <div class="ov ov-left" data-hand-card data-shape="open" data-state="idle">
+        <div class="ov-icon" aria-hidden="true">
+          <!-- Supplied artwork, applied as CSS masks so it still takes
+               currentColor and tints with the card state. -->
+          <span class="hic hic-open"></span>
+          <span class="hic hic-fist"></span>
+          <span class="hic hic-fist-side"></span>
+        </div>
+        <b class="ov-label" data-hand-label>OPEN HANDS</b>
+        <span class="ov-detail" data-hand-detail></span>
+        <span class="ov-row" data-palm-row data-state="idle">PALMS TOWARD YOU</span>
+      </div>
+
+      <!-- RIGHT: expression. Prompt only -- never detected. -->
+      <div class="ov ov-right" data-face-card data-expression="smile">
+        <div class="ov-icon" aria-hidden="true">
+          <svg class="ic ic-smile" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+               stroke-width="2.4" stroke-linecap="round">
+            <circle cx="24" cy="24" r="17"/>
+            <circle cx="18" cy="20" r="1.8" fill="currentColor" stroke="none"/>
+            <circle cx="30" cy="20" r="1.8" fill="currentColor" stroke="none"/>
+            <path d="M16 28c2.5 3.4 5.2 5 8 5s5.5-1.6 8-5"/>
+          </svg>
+          <svg class="ic ic-frown" viewBox="0 0 48 48" fill="none" stroke="currentColor"
+               stroke-width="2.4" stroke-linecap="round">
+            <circle cx="24" cy="24" r="17"/>
+            <circle cx="18" cy="20" r="1.8" fill="currentColor" stroke="none"/>
+            <circle cx="30" cy="20" r="1.8" fill="currentColor" stroke="none"/>
+            <path d="M16 33c2.5-3.4 5.2-5 8-5s5.5 1.6 8 5"/>
+          </svg>
+        </div>
+        <b class="ov-label" data-face-label>SMILE</b>
+        <span class="ov-detail">hold it through the take</span>
+      </div>
+
+      <!-- BOTTOM CENTRE: motion -->
+      <div class="ov ov-bottom" data-motion-card data-filming="false">
+        <div class="ov-bottom-head">
+          <span class="stage-label" data-stage-label>STAGE 01 / 03</span>
+          <span class="phase-tag" data-phase-tag>GET IN POSITION</span>
+        </div>
+        <p class="ov-instruction" data-stage-instruction></p>
+        <p class="ov-hint" data-stage-hint></p>
+        <div class="pips" data-cycle-pips></div>
+        <div class="urgency" data-urgency hidden>
+          <span class="urgency-fill" data-urgency-bar></span>
+        </div>
+      </div>
+
+      <div class="fault-banner" data-fault hidden></div>
+    </div>
+  </section>
+
+  <!-- ================= COMPLETE ================= -->
+  <section class="screen screen-complete" data-screen="complete">
+    <div class="complete-mark" aria-hidden="true">
+      <svg viewBox="0 0 96 96" fill="none">
+        <circle class="cm-ring" cx="48" cy="48" r="40" stroke="currentColor" stroke-width="3"/>
+        <path class="cm-tick" d="M31 49l12 12 22-24" stroke="currentColor" stroke-width="5"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1 class="complete-title" data-complete-title>MOTION CAPTURE COMPLETE</h1>
+  </section>
+
+  <!-- ================= BUILD ================= -->
+  <section class="screen screen-build" data-screen="build">
+    <div class="build-wrap">
+      <h1 class="build-title" data-build-title>Reconstructing volumetric model</h1>
+      <div class="progress"><span class="progress-fill" data-build-bar></span></div>
+      <p class="build-sub" data-build-sub>building...</p>
+    </div>
+
+    <!-- Dev-only: press the backtick key to measure DROP_TIME_SEC. -->
+    <div class="sync-scope" data-sync-scope hidden>
+      <h3>Sync scope</h3>
+      <p class="scope-help">Tap on the beat you want the bar to finish on, then paste the
+        reading into <code>AUDIO.DROP_TIME_SEC</code> in <code>src/config.js</code>.</p>
+      <div class="scope-time" data-scope-time>0:00.000</div>
+      <button class="btn btn-ghost" data-scope-tap>TAP ON BEAT</button>
+      <div class="scope-taps" data-scope-taps></div>
+    </div>
+  </section>
+
+  <!-- ================= REVEAL ================= -->
+  <section class="screen screen-reveal" data-screen="reveal">
+    <canvas data-composite></canvas>
+    <div class="reveal-actions">
+      <span class="export-status" data-export-status></span>
+      <button class="btn btn-ghost" data-clear-action>Clear session data</button>
+      <button class="btn btn-ghost" data-restart-action>Run again</button>
+      <button class="btn btn-primary" data-export-action>Record clip</button>
+    </div>
+  </section>
+
+</main>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# Downloaded by scripts/fetch-deps.mjs. ~40 MB, and the app falls back to the
+# CDN when they are absent, so there is no reason to track them.
+/vendor/
+/models/
+
+# Supply your own. Redistributing a copyrighted recording is not the same as
+# using one in a video you post -- see the README.
+/assets/audio/*
+!/assets/audio/.gitkeep
+
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

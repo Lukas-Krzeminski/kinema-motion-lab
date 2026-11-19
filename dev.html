@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KINEMA -- sync harness</title>
+<link rel="stylesheet" href="styles/main.css">
+<style>
+  .screen { opacity: 1; transform: none; }
+  .harness { width: 100%; max-width: 760px; margin: 0 auto; }
+  .harness h1 { font-size: 18px; margin: 0 0 6px; }
+  .harness .lede { color: var(--text-dim); margin: 0 0 22px; font-size: 13px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+  .result {
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.9;
+    background: rgba(10,31,27,.7); border: 1px solid var(--line-soft);
+    border-radius: 8px; padding: 14px 16px; min-height: 120px;
+    white-space: pre-wrap; color: var(--text-dim);
+  }
+  .verdict { margin-top: 14px; font-family: var(--mono); font-size: 13px; }
+  .verdict.pass { color: var(--accent); }
+  .verdict.fail { color: var(--err); }
+  .note { color: var(--text-mute); font-size: 11.5px; font-family: var(--mono); margin-top: 16px;
+          border-top: 1px solid var(--line-soft); padding-top: 12px; }
+  .bar-demo { height: 6px; background: var(--line-soft); border-radius: 999px; overflow: hidden; margin: 10px 0 18px; }
+  .bar-demo span { display:block; height:100%; width:0; background: linear-gradient(90deg,var(--accent-dim),var(--accent)); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark"></span>
+    <span class="brand-name">KINEMA</span>
+    <span class="brand-sub">sync harness &mdash; dev only</span>
+  </div>
+  <div class="topbar-meta"><span class="meta-item version">dev</span></div>
+</header>
+
+<main class="stage">
+  <section class="screen is-active">
+    <div class="harness">
+      <h1>Drop-sync verification</h1>
+      <p class="lede">
+        Runs the real build loop against the real audio engine and measures how long the bar
+        takes to reach 100%. Every run must land on the same audio position &mdash; that is what
+        guarantees the reveal hits the beat.
+      </p>
+
+      <div class="bar-demo"><span id="bar"></span></div>
+
+      <div class="row">
+        <button class="btn btn-primary" id="run">Run 3 timed passes</button>
+        <button class="btn btn-ghost" id="once">Single pass</button>
+        <span id="status" style="font-family:var(--mono);font-size:12px;color:var(--text-mute)"></span>
+      </div>
+
+      <div class="result" id="out">Idle.</div>
+      <div class="verdict" id="verdict"></div>
+
+      <p class="note">
+        Tuning DROP_TIME_SEC: play your track, note the timestamp of the beat you want the bar to
+        finish on, and set AUDIO.DROP_TIME_SEC in src/config.js. The build screen also has a live
+        sync scope &mdash; press the backtick key while it runs.
+      </p>
+    </div>
+  </section>
+</main>
+
+<script type="module">
+import { AUDIO } from './src/config.js';
+import { createAudioEngine } from './src/render/audio.js';
+
+const out = document.getElementById('out');
+const verdict = document.getElementById('verdict');
+const status = document.getElementById('status');
+const bar = document.getElementById('bar');
+
+const log = (line) => { out.textContent += `\n${line}`; };
+
+/**
+ * Mirrors src/ui/build.js exactly: progress is read from audio position, not
+ * from a wall clock. Returns both so drift between them can be measured.
+ */
+function runPass(audio) {
+  return new Promise((resolve) => {
+    const wallStart = performance.now();
+    let maxProgress = 0;
+    let frames = 0;
+
+    const tick = () => {
+      if (performance.now() - wallStart > 15000) {
+        resolve({ wallMs: performance.now() - wallStart, audioTime: audio.currentTime(),
+                  frames, maxProgress, stalled: true });
+        return;
+      }
+      const t = audio.currentTime();
+      const p = Math.min(1, Math.max(0, t / audio.buildDuration));
+      maxProgress = Math.max(maxProgress, p);
+      bar.style.width = `${(p * 100).toFixed(2)}%`;
+      frames++;
+
+      if (p >= 1) {
+        resolve({
+          wallMs: performance.now() - wallStart,
+          audioTime: t,
+          frames,
+          maxProgress,
+        });
+        return;
+      }
+      requestAnimationFrame(tick);
+    };
+    // Mirrors build.js: start ticking first, so a rejected play() shows up as
+    // a stalled bar rather than a loop that never starts at all.
+    requestAnimationFrame(tick);
+    audio.play().catch((e) => log(`  play() rejected: ${e?.message ?? e}`));
+  });
+}
+
+async function pass(n, total) {
+  status.textContent = `pass ${n} of ${total}...`;
+  const audio = await createAudioEngine();
+  if (n === 1) {
+    log(`source        ${audio.isSynth ? 'SYNTH FALLBACK (no track.mp3 present)' : AUDIO.TRACK_URL}`);
+    log(`build length  ${audio.buildDuration.toFixed(3)} s`);
+    log(`starts at     ${(audio.startAt ?? 0).toFixed(3)} s into the track`);
+    log(`track length  ${audio.duration ? audio.duration.toFixed(2) + ' s' : 'unknown'}`);
+    log('');
+  }
+  const r = await runPass(audio);
+  audio.stop();
+  log(`pass ${n}  wall ${(r.wallMs / 1000).toFixed(3)}s   audio ${r.audioTime.toFixed(3)}s   ` +
+      `frames ${String(r.frames).padStart(4)}   drift ${((r.wallMs / 1000) - r.audioTime >= 0 ? '+' : '')}${((r.wallMs / 1000) - r.audioTime).toFixed(3)}s`);
+  return r;
+}
+
+async function runAll(count) {
+  document.getElementById('run').disabled = true;
+  document.getElementById('once').disabled = true;
+  out.textContent = 'Running.';
+  verdict.textContent = '';
+  verdict.className = 'verdict';
+
+  const results = [];
+  for (let i = 1; i <= count; i++) results.push(await pass(i, count));
+
+  const times = results.map((r) => r.audioTime);
+  const spread = Math.max(...times) - Math.min(...times);
+  const wall = results.map((r) => r.wallMs / 1000);
+  const wallSpread = Math.max(...wall) - Math.min(...wall);
+
+  log('');
+  log(`audio-position spread across passes: ${(spread * 1000).toFixed(1)} ms`);
+  log(`wall-clock spread across passes:     ${(wallSpread * 1000).toFixed(1)} ms`);
+
+  // One frame at 60fps is ~16.7ms; landing inside that means the bar completes
+  // at the same point in the track every time.
+  const ok = spread < 0.034;
+  verdict.className = `verdict ${ok ? 'pass' : 'fail'}`;
+  verdict.textContent = ok
+    ? `PASS -- completion lands within ${(spread * 1000).toFixed(1)} ms of the same audio position every pass (< 2 frames).`
+    : `FAIL -- completion varies by ${(spread * 1000).toFixed(1)} ms between passes.`;
+
+  status.textContent = 'done';
+  document.getElementById('run').disabled = false;
+  document.getElementById('once').disabled = false;
+}
+
+document.getElementById('run').addEventListener('click', () => runAll(3));
+document.getElementById('once').addEventListener('click', () => runAll(1));
+</script>
+</body>
+</html>

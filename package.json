@@ -1,0 +1,13 @@
+{
+  "name": "kinema-motion-lab",
+  "version": "4.2.1",
+  "private": true,
+  "type": "module",
+  "description": "Local-only webcam motion capture demo.",
+  "scripts": {
+    "setup": "node scripts/fetch-deps.mjs",
+    "start": "node serve.mjs",
+    "check": "node --check serve.mjs && node --check scripts/fetch-deps.mjs && for f in src/*.js src/**/*.js; do node --check \"$f\" || exit 1; done && echo all-ok"
+  },
+  "engines": { "node": ">=18" }
+}

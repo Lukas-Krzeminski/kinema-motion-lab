@@ -1,0 +1,638 @@
+/* KINEMA Motion Lab
+   Dark instrument-panel skin. All visual styling is confined to this file
+   plus the copy strings in src/config.js, so the look can be reworked
+   without touching any logic. */
+
+:root {
+  --bg:        #05100e;
+  --bg-2:      #081815;
+  --panel:     #0a1f1b;
+  --panel-2:   #0d2621;
+  --line:      #17403a;
+  --line-soft: #10302b;
+
+  --text:      #d8f5ef;
+  --text-dim:  #6f9a93;
+  --text-mute: #4a736d;
+
+  --accent:    #5ef2d6;
+  --accent-dim:#2ba58f;
+  --warn:      #ffc857;
+  --err:       #ff6b8a;
+  --hot:       #ff5c8a;
+
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; margin: 0; }
+
+body {
+  background:
+    radial-gradient(1200px 700px at 50% -10%, #0d2a25 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background 1.1s ease, color 1.1s ease;
+}
+
+/* Faint technical grid, so the ground is never flat. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(94, 242, 214, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(94, 242, 214, 0.028) 1px, transparent 1px);
+  background-size: 46px 46px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ---------------------------------------------------------------- topbar */
+
+.topbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line-soft);
+  background: rgba(5, 16, 14, 0.72);
+  backdrop-filter: blur(8px);
+  flex: 0 0 auto;
+}
+
+/* Capture and reveal run full-bleed -- nothing above the frame. */
+/* Hidden from the capture flow onward. */
+body[data-view="capture"] .topbar,
+body[data-view="reveal"] .topbar,
+body[data-view="complete"] .topbar,
+body[data-view="build"] .topbar { display: none; }
+
+.brand { display: flex; align-items: baseline; gap: 10px; }
+
+.brand-mark {
+  width: 11px; height: 11px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(94, 242, 214, 0.16), 0 0 14px var(--accent);
+  align-self: center;
+  animation: pulse 2.4s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.45; } }
+
+.brand-name { font-weight: 700; font-size: 16px; letter-spacing: 0.16em; }
+.brand-sub {
+  font-size: 11px; color: var(--text-mute);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+.topbar-meta {
+  display: flex; align-items: center; gap: 18px;
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text-mute); letter-spacing: 0.06em;
+}
+.meta-item b { color: var(--text-dim); font-weight: 500; margin-right: 6px; }
+.meta-item.version {
+  color: var(--accent-dim);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+
+/* ---------------------------------------------------------------- screens */
+
+.stage {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+}
+
+.screen {
+  grid-area: 1 / 1;
+  min-height: 0;
+  opacity: 0;
+  transition: opacity 0.26s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.screen.is-active { opacity: 1; }
+.screen[hidden] { display: none; }
+
+/* Full-bleed screens have no padding at all. */
+.screen-capture, .screen-reveal { padding: 0; }
+
+/* ---------------------------------------------------------------- panels */
+
+.panel {
+  width: 100%;
+  max-width: 660px;
+  background: linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 26px 28px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.5);
+}
+
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 18px;
+}
+.panel h1 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: 0.02em; }
+
+.pill {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em;
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid var(--line); color: var(--text-dim); white-space: nowrap;
+}
+.pill-live { color: var(--accent); border-color: var(--accent-dim); }
+
+/* ---------------------------------------------------------------- log */
+
+.log {
+  list-style: none; margin: 0; padding: 0;
+  font-family: var(--mono); font-size: 12.5px; line-height: 1.85;
+  max-height: 340px; overflow-y: auto;
+}
+.log-line {
+  display: grid; grid-template-columns: 40px 1fr auto;
+  gap: 12px; align-items: baseline;
+  color: var(--text-dim);
+  animation: logIn 0.2s ease;
+}
+@keyframes logIn { from { opacity: 0; transform: translateX(-4px); } }
+.log-status { color: var(--text-mute); text-align: right; }
+.log-ok  .log-status { color: var(--accent); }
+.log-err .log-status, .log-err .log-text { color: var(--err); }
+.log-detail { color: var(--text-mute); font-size: 11.5px; }
+
+/* ---------------------------------------------------------------- consent */
+
+.panel-consent { max-width: 540px; text-align: center; }
+.consent-icon { color: var(--accent); margin-bottom: 14px; }
+.consent-icon svg { width: 46px; height: 46px; }
+.panel-consent h1 { font-size: 19px; margin-bottom: 12px; }
+.consent-body { color: var(--text-dim); margin: 0 0 14px; font-size: 13.5px; }
+.consent-note {
+  color: var(--text-mute); font-size: 12px;
+  font-family: var(--mono); margin: 0 0 20px;
+}
+.consent-error {
+  color: var(--err); font-size: 12.5px; margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 107, 138, 0.3);
+  border-radius: 8px;
+  background: rgba(255, 107, 138, 0.07);
+}
+.consent-facts {
+  list-style: none; margin: 22px 0 0; padding: 16px 0 0;
+  border-top: 1px solid var(--line-soft);
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  font-family: var(--mono); font-size: 10.5px; color: var(--text-mute);
+}
+.consent-facts b {
+  display: block; color: var(--text-dim); font-weight: 500;
+  letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3px;
+}
+
+/* ---------------------------------------------------------------- buttons */
+
+.btn {
+  font-family: var(--sans); font-size: 13px; font-weight: 600;
+  letter-spacing: 0.02em; padding: 10px 20px;
+  border-radius: 8px; border: 1px solid transparent; cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.1s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.btn-primary { background: var(--accent); color: #042019; }
+.btn-primary:hover:not(:disabled) { background: #7cf7e0; }
+.btn-ghost { background: transparent; border-color: var(--line); color: var(--text-dim); }
+.btn-ghost:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+/* ---------------------------------------------------------------- capture */
+
+/* Full-bleed camera. Everything else floats on top of it. */
+.viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+}
+.viewport video,
+.viewport canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* Preview is mirrored for the subject; detection uses unmirrored landmarks. */
+.viewport video { transform: scaleX(-1); }
+
+/* --- telemetry strip --- */
+
+.telemetry {
+  position: absolute;
+  top: 16px; left: 18px;
+  display: flex; gap: 16px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--text-mute);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+.telemetry[hidden] { display: none; }
+.telemetry i { font-style: normal; opacity: 0.65; }
+.telemetry b { font-weight: 500; color: var(--text-dim); }
+.telemetry b[data-state="ok"]   { color: var(--accent); }
+.telemetry b[data-state="warn"] { color: var(--warn); }
+
+/* --- overlay cards --- */
+
+.ov {
+  position: absolute;
+  background: rgba(4, 18, 16, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  padding: 16px 18px;
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.ov-left  { left: 26px;  top: 50%; transform: translateY(-50%); width: 190px; text-align: center; }
+.ov-right { right: 26px; top: 50%; transform: translateY(-50%); width: 190px; text-align: center; }
+
+.ov-icon {
+  color: var(--text-dim);
+  height: 78px;
+  margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+/* Hand icons are portrait, so height leads and width follows. */
+.ov-icon svg { height: 78px; width: auto; }
+.ov-label {
+  display: block;
+  font-family: var(--mono); font-size: 12px;
+  letter-spacing: 0.14em; color: var(--text);
+}
+.ov-detail {
+  display: block; margin-top: 5px;
+  font-size: 10.5px; color: var(--text-mute); line-height: 1.45;
+}
+
+/* Only the icon matching the current stage is shown. */
+.ic, .hic { display: none; }
+[data-expression="smile"] .ic-smile,
+[data-expression="frown"] .ic-frown { display: block; margin: 0 auto; }
+[data-icon="open"] .hic-open,
+[data-icon="fist"] .hic-fist,
+[data-icon="fist-side"] .hic-fist-side { display: block; }
+
+/*
+ * Hand icons are supplied PNG line art, applied as a MASK rather than dropped
+ * in as <img>. The artwork therefore paints in currentColor, so it still tints
+ * with the card state (teal when the shape matches, amber when not) -- an
+ * <img> would be stuck at whatever colour the file happens to be.
+ */
+.hic {
+  width: 78px;
+  height: 81px;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center;  mask-position: center;
+  -webkit-mask-size: contain;     mask-size: contain;
+}
+.hic-fist {
+  -webkit-mask-image: url("../assets/icons/fist-front.png");
+  mask-image: url("../assets/icons/fist-front.png");
+}
+.hic-fist-side {
+  -webkit-mask-image: url("../assets/icons/fist-side.png");
+  mask-image: url("../assets/icons/fist-side.png");
+}
+.hic-open {
+  -webkit-mask-image: url("../assets/icons/open-hand.png");
+  mask-image: url("../assets/icons/open-hand.png");
+  /* Turned a quarter clockwise, as requested. */
+  transform: rotate(90deg);
+}
+
+/* Hand card ticks green when the shape matches. Indicator only, never a gate. */
+.ov[data-state="ok"] {
+  border-color: var(--accent-dim);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(94, 242, 214, 0.35);
+}
+.ov[data-state="ok"] .ov-icon { color: var(--accent); }
+.ov[data-state="pending"] .ov-icon { color: var(--warn); }
+
+.ov-row {
+  display: block; margin-top: 12px; padding-top: 10px;
+  border-top: 1px solid var(--line-soft);
+  font-family: var(--mono); font-size: 9.5px;
+  letter-spacing: 0.1em; color: var(--text-mute);
+}
+.ov-row[data-state="ok"]      { color: var(--accent); }
+.ov-row[data-state="pending"] { color: var(--warn); }
+
+/* The expression card is a prompt, so it always reads as "do this". */
+.ov-right .ov-icon { color: var(--accent); }
+
+/* --- bottom motion card --- */
+
+.ov-bottom {
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  min-width: 420px;
+  max-width: 560px;
+  text-align: center;
+  padding: 16px 26px 18px;
+}
+.ov-bottom-head {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+  margin-bottom: 8px;
+}
+.stage-label { color: var(--accent-dim); }
+.phase-tag {
+  color: var(--text-mute);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+.ov-bottom[data-filming="true"] {
+  border-color: var(--hot);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 92, 138, 0.4);
+}
+.ov-bottom[data-filming="true"] .phase-tag {
+  color: #fff; border-color: var(--hot); background: rgba(255, 92, 138, 0.28);
+}
+
+.ov-instruction { margin: 0; font-size: 17px; font-weight: 600; }
+.ov-hint {
+  margin: 4px 0 0; font-family: var(--mono);
+  font-size: 11px; color: var(--text-mute);
+}
+
+.pips { display: flex; justify-content: center; gap: 9px; margin-top: 12px; }
+.pip {
+  width: 34px; height: 5px; border-radius: 999px;
+  background: var(--line);
+  transition: background 0.2s ease;
+}
+.pip[data-state="done"] { background: var(--hot); box-shadow: 0 0 10px rgba(255, 92, 138, 0.7); }
+
+/* Draining segment timer. Dots are user-led, so this is the only thing
+   telling somebody to hurry -- without it there is no reason to finish on
+   time and the clips would vary wildly in how much motion they contain. */
+.urgency {
+  margin-top: 10px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.urgency[hidden] { display: none; }
+.urgency-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  /* No transition -- it is redrawn every frame from the real clock. */
+}
+.ov-bottom[data-urgent="true"] .urgency-fill { background: var(--hot); }
+
+/* The intro bar fills rather than drains, and stays teal -- it means "getting
+   ready", the opposite of the pink one meaning "running out". */
+.ov-bottom[data-intro="true"] .urgency-fill { background: var(--accent); }
+
+/* The settle beat: amber, counting down, pulsing. It has to read as "movement
+   is imminent", not as a rest -- a calm card here left people flat-footed when
+   the dot took off. */
+/* The hold is deliberately STILL. Pulsing here read as "the take has started"
+   while the bar was only part way -- the flashing belongs to recording. */
+.ov-bottom[data-settle="true"] {
+  border-color: var(--warn);
+}
+.ov-bottom[data-settle="true"] .urgency-fill { background: var(--warn); }
+.ov-bottom[data-settle="true"] .phase-tag {
+  color: #2a1c00;
+  border-color: var(--warn);
+  background: var(--warn);
+  font-weight: 700;
+}
+.ov-bottom[data-intro="true"] .phase-tag {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+  background: rgba(94, 242, 214, 0.14);
+}
+.ov-bottom[data-urgent="true"] {
+  border-color: var(--hot);
+  animation: urgentPulse 0.55s ease-in-out infinite;
+}
+@keyframes urgentPulse {
+  50% { box-shadow: 0 16px 44px rgba(0,0,0,0.5), 0 0 0 3px rgba(255, 92, 138, 0.55); }
+}
+
+/* --- fault --- */
+
+/* A frame-loop exception used to fail silently and freeze everything.
+   Now it says so. */
+.fault-banner {
+  position: absolute;
+  left: 50%; bottom: 16px; transform: translateX(-50%);
+  max-width: 640px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 107, 138, 0.55);
+  background: rgba(40, 8, 18, 0.95);
+  color: var(--err);
+  font-family: var(--mono); font-size: 11.5px; line-height: 1.5;
+  z-index: 5;
+}
+.fault-banner[hidden] { display: none; }
+
+/* ---------------------------------------------------------------- complete */
+
+.screen-complete { flex-direction: column; gap: 22px; }
+
+.complete-mark { color: var(--accent); }
+.complete-mark svg { width: 96px; height: 96px; }
+/* Keyed to .is-active, not to page load -- the screen exists in the DOM from
+   the start, so an unkeyed animation would finish while still hidden and the
+   tick would simply appear already drawn. */
+.cm-ring { stroke-dasharray: 252; stroke-dashoffset: 252; }
+.cm-tick { stroke-dasharray: 52;  stroke-dashoffset: 52; }
+.screen-complete.is-active .cm-ring { animation: cmRing 0.45s ease forwards; }
+.screen-complete.is-active .cm-tick { animation: cmTick 0.28s ease 0.32s forwards; }
+@keyframes cmRing { to { stroke-dashoffset: 0; } }
+@keyframes cmTick { to { stroke-dashoffset: 0; } }
+
+.complete-title {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-align: center;
+}
+
+/* ---------------------------------------------------------------- build */
+
+/* The build gets its own dark purple ground and a thick pink bar. It is the
+   turn: still plausibly a progress screen, but already drifting toward where
+   the reveal is about to go. */
+body[data-view="build"] {
+  background:
+    radial-gradient(900px 560px at 50% 42%, #4a1450 0%, transparent 62%),
+    linear-gradient(180deg, #2a0d33 0%, #160820 100%);
+}
+body[data-view="build"]::before { opacity: 0.4; }
+
+.build-wrap { width: 100%; max-width: 520px; text-align: center; }
+
+.build-title {
+  margin: 0 0 22px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: rgba(255, 214, 240, 0.78);
+}
+
+.progress {
+  height: 30px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 2px solid rgba(255, 140, 200, 0.5);
+  /* Rectangular, not a pill. */
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+.progress-fill {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 0;
+  background: linear-gradient(90deg, #ff2d88 0%, #ff5fae 55%, #ff8ecb 100%);
+  box-shadow: 0 0 24px rgba(255, 45, 136, 0.85), 0 0 56px rgba(255, 45, 136, 0.4);
+  /*
+   * A short linear glide. The bar is still driven from audio position every
+   * frame, and completion is still decided on the raw value -- this only
+   * smooths the visual, so a dropped frame reads as a glide rather than a
+   * jump. Long enough to hide a hitch, short enough to stay on the beat.
+   */
+  transition: width 0.09s linear;
+}
+
+.build-sub {
+  margin: 22px 0 0;
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: rgba(255, 205, 234, 0.92);
+}
+
+.sync-scope {
+  position: fixed; right: 22px; bottom: 22px; z-index: 20; width: 300px;
+  background: rgba(4, 18, 16, 0.96);
+  border: 1px solid var(--accent-dim);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.sync-scope h3 {
+  margin: 0 0 6px; font-size: 11px; font-family: var(--mono);
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent);
+}
+.scope-help { margin: 0 0 12px; font-size: 11px; color: var(--text-mute); line-height: 1.5; }
+.scope-help code { color: var(--text-dim); font-family: var(--mono); }
+.scope-time {
+  font-family: var(--mono); font-size: 30px; color: var(--text);
+  font-variant-numeric: tabular-nums; margin-bottom: 10px;
+}
+.scope-taps {
+  margin-top: 10px; font-family: var(--mono);
+  font-size: 11px; color: var(--accent); min-height: 16px;
+}
+
+/* ---------------------------------------------------------------- reveal */
+
+body[data-revealed="true"] {
+  background:
+    radial-gradient(1200px 700px at 50% -10%, #ff9ed4 0%, transparent 60%),
+    linear-gradient(180deg, #ff6fb8 0%, #b93289 100%);
+  color: #fff;
+}
+body[data-revealed="true"]::before { opacity: 0.35; }
+
+.screen-reveal { position: relative; background: #000; }
+.screen-reveal canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Controls fade in only on hover, so the reveal itself stays clean. */
+.reveal-actions {
+  position: absolute;
+  right: 22px; bottom: 22px;
+  display: flex; align-items: center; gap: 10px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.screen-reveal:hover .reveal-actions { opacity: 1; }
+
+.export-status {
+  font-family: var(--mono); font-size: 11px;
+  color: #fff; min-width: 96px; text-align: right;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+body[data-revealed="true"] .btn-primary { background: #fff; color: #b93289; }
+body[data-revealed="true"] .btn-primary:hover:not(:disabled) { background: #ffe6f4; }
+body[data-revealed="true"] .btn-ghost {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+  background: rgba(0, 0, 0, 0.25);
+}
+body[data-revealed="true"] .btn-ghost:hover {
+  border-color: #fff; background: rgba(255, 255, 255, 0.2); color: #fff;
+}
+
+/* ---------------------------------------------------------------- narrow */
+
+@media (max-width: 1000px) {
+  .ov-left, .ov-right { width: 148px; padding: 12px 13px; }
+  .ov-icon, .ov-icon svg { width: 42px; height: 42px; }
+  .ov-bottom { min-width: 0; width: calc(100% - 340px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand-mark,
+  .ov-bottom[data-urgent="true"],
+  .screen { transition: opacity 0.12s ease; }
+  .cm-ring, .cm-tick { animation-duration: 0.01s; }
+}
